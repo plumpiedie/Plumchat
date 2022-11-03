@@ -1,36 +1,31 @@
 import sys
 from datetime import datetime
 from time import sleep
-
-from PyQt5.QtCore import QDate, QTime, Qt, QRect, QMetaObject, QPropertyAnimation, QThread, pyqtSignal, QSize, QEvent
-from PyQt5.QtGui import QColor, QFont, QPixmap, QIcon, QTextCursor
+from PyQt5.QtCore import Qt, QMetaObject, QPropertyAnimation, QThread, pyqtSignal, QEvent
+from PyQt5.QtGui import QColor, QIcon, QTextCursor
 from PyQt5.QtMultimedia import QSound
 from PyQt5.QtWidgets import *
 from socket import *
 import os
 import pickle
-
-
 from mainwindow import *
 
-import getpass
-
-
+USERNAME = 'user1'
 HOME_PATH = os.path.expanduser('~')
-DESKTOP = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')  # ПРОВЕРИТЬ В ЛИНУКСЕ
+DESKTOP = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
 USERFILES = os.path.join(HOME_PATH, 'PlumChat')
 if not os.path.exists(USERFILES):
     os.mkdir(USERFILES)
 
-IP_ADDRESS = '192.168.77.30'
+IP_ADDRESS = 'ADD IP ADDRESS OF SERVER HERE'
 PORT = 50005
 window_obj = []
 file_senders = {}
 file_receivers = {}
 
+
 class BlinkTab(QThread):
     blinkSignal = pyqtSignal(list)
-
     style_blink = 'orange'
     style_default = 'black'
 
@@ -76,21 +71,20 @@ class FileRequest(QThread):
             sleep(2)
             self.fileclient.send(pickle.dumps(tag_msg))
             filesize = pickle.loads(self.fileclient.recv(1024))
-            cicles = 0
-            max_cicles = filesize // 1024
-            self.r_max_progress.emit(max_cicles - 1)
+            cycles = 0
+            max_cycles = filesize // 1024
+            self.r_max_progress.emit(max_cycles - 1)
             filename = self.anchor.split('/')[2]
             file = os.path.join(USERFILES, self.companion, filename)
             with open(file, 'wb') as self.file:
                 data = self.fileclient.recv(1024)
                 while data:
-                    cicles += 1
-                    self.r_progress.emit(cicles)
+                    cycles += 1
+                    self.r_progress.emit(cycles)
                     self.file.write(data)
                     data = self.fileclient.recv(1024)
             self.dwnldendSignal.emit(filename)
             file_receivers.pop(self.companion)
-            print('скачан же', file)
             self.close()
         except Exception as exc:
             print('FileRequest(QThread) error:', exc)
@@ -127,17 +121,17 @@ class SendFile(QThread):
             sleep(2)
             ptag_msg = pickle.dumps(self.tag_msg)
             self.fileclient.send(ptag_msg)
-            # понадобится циклов
-            max_cicles = os.stat(self.res[0]).st_size // 1024
-            self.max_progress.emit(max_cicles - 1)
-            cicles = 0
+            # cycles needed
+            max_cycles = os.stat(self.res[0]).st_size // 1024
+            self.max_progress.emit(max_cycles - 1)
+            cycles = 0
 
             with open(self.res[0], "rb") as self.file:
                 filemsg = self.file.read(1024)
                 try:
                     while filemsg:
-                        cicles += 1
-                        self.progress.emit(cicles)
+                        cycles += 1
+                        self.progress.emit(cycles)
                         self.fileclient.send(filemsg)
                         filemsg = self.file.read(1024)
                 except Exception as exc:
@@ -178,7 +172,6 @@ class Receive(QThread):
     def run(self):
         while True:
             try:
-                # if dlgMain.connected:
                 rawmsg = self.client.recv(1024)
                 msg = b''
                 end = b';$&nd/'
@@ -249,16 +242,12 @@ class PopUp(QWidget):
 
 class MainWindow(QMainWindow):
 
-
     def __init__(self):
         QMainWindow.__init__(self)
-        self.nickname = getpass.getuser()
+        self.nickname = USERNAME
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.setWindowFlag(Qt.FramelessWindowHint)
-
-        # self.ui.cornerGrips = [QtWidgets.QSizeGrip(self) for i in range(4)]
-
         self.shadow = QGraphicsDropShadowEffect(self)
         self.shadow.setBlurRadius(50)
         self.shadow.setXOffset(0)
@@ -266,55 +255,52 @@ class MainWindow(QMainWindow):
         self.shadow.setColor(QColor(0, 92, 157, 550))
         self.ui.centralwidget.setGraphicsEffect(self.shadow)
         self.setWindowTitle('Plumchat_beta')
-
         self.ui.push_btn_menu.clicked.connect(lambda: self.togglemenu(250, True))
 
-        # управления пунктами меню
+        # menu control
         self.ui.menu_btn_1.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.page))
         self.ui.menu_btn_2.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.page_3))
-        self.ui.menu_btn_3.clicked.connect(self.default_tree_style)
-        #self.ui.menu_btn_3.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.page_2))
+        self.ui.menu_btn_3.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.page_2))
 
-        # управление окном
+        # window control
         self.ui.frame_top.mouseMoveEvent = self.moveWindow
         self.ui.pushButton_4.clicked.connect(lambda: self.showMinimized())
         self.ui.pushButton_3.clicked.connect(lambda: self.restore_or_maximize_window())
         self.ui.pushButton_2.clicked.connect(lambda: self.close())
+
         # tray
         action_hide.triggered.connect(lambda: self.hide())
         action_show.triggered.connect(lambda: self.showNormal())
 
-        # действия кнопок
+        # btn actions
         self.ui.label.setText(self.windowTitle())
-        self.ui.plaintab.setPlaceholderText('Введите сообщение')
+        self.ui.plaintab.setPlaceholderText('Enter text...')
         self.ui.sendButton.clicked.connect(self.send_massage)
-        # self.ui.tabWidget.setTabsClosable(True)
         self.ui.listWidget.itemDoubleClicked.connect(self.user_list_clicked)
         self.ui.tabWidget.tabCloseRequested.connect(self.close_tab)
         self.ui.tabWidget.tabBar().setTabButton(0, QTabBar.RightSide, None)
         self.ui.sendFiletab.clicked.connect(self.send_file)
 
-        # надо переработать
+        # exit btn ¯\_(^^)_/¯
         self.ui.exit_btn.clicked.connect(self.exit)
 
-        # часть для коннекта (сейчас не работает по сути)
+        # part for preconnection (not workin at the moment)
         self.ui.plaintab.setDisabled(True)
         self.ui.listWidget.setDisabled(True)
         self.ui.sendButton.setDisabled(True)
-        #self.ui.tabWidget.setDisabled(True)
 
-        # создание словаря пользователй
+        # users dict creation
         self.reg_usrs = {}
         self.online_usrs = []
 
         self.connected = False
         self.connection()
 
-        # изменение поведения кнопки enter
+        # return btn behavior
         self.ui.plaintab.installEventFilter(self, )
 
         self.ui.tabWidget.setMovable(True)
-        self.ui.tabWidget.tabBarClicked.connect(self.tabbarclicked)
+        self.ui.tabWidget.tabBarClicked.connect(self.tabbar_clicked)
 
         self.ui.brawtab.setOpenLinks(False)
         self.ui.brawtab.anchorClicked.connect(self.anchor_clicked)
@@ -322,7 +308,6 @@ class MainWindow(QMainWindow):
 
     def opened_tabs(self, tab):
         pass
-    #  сделать открытие полсдених вкладок после включения
 
     def default_tree_style(self):
 
@@ -336,9 +321,6 @@ class MainWindow(QMainWindow):
 
         except Exception as exc:
             print(exc)
-        # if self.ui.listWidget.findItems() is not None:
-        #     for item in self.ui.listWidget.lower():
-        #         print(item.objectName())
 
     def eventFilter(self, obj, event):
         try:
@@ -387,7 +369,7 @@ class MainWindow(QMainWindow):
                 r_barname = f'r_bar{companion}'
                 globals()[r_barname] = QtWidgets.QProgressBar(self.r_barui.barframe)
                 globals()[r_barname].setObjectName(f'bar{companion}')
-                globals()[r_barname].setFormat('Скачивание...%p%')
+                globals()[r_barname].setFormat('Download...%p%')
                 globals()[r_barname].setAlignment(Qt.AlignHCenter)
                 self.r_barui.barlayout.insertWidget(0, globals()[r_barname])
                 self.ui.tabWidget.findChild(QWidget, f'{companion}').layout().addWidget(self.r_barui.barframe)
@@ -432,7 +414,7 @@ class MainWindow(QMainWindow):
             self.ui.plaintab.setMinimumSize(QtCore.QSize(0, 20))
             self.ui.plaintab.setMaximumSize(QtCore.QSize(16777215, 40))
             self.ui.plaintab.setObjectName(f'plain{companion}')
-            self.ui.plaintab.setPlaceholderText('Введите сообщение')
+            self.ui.plaintab.setPlaceholderText('Enter text...')
             self.ui.plaintab.installEventFilter(self)
             self.ui.newtablayout_2.addWidget(self.ui.newtabframe)
             self.ui.newtablayout.addWidget(self.ui.msg_browser)
@@ -460,7 +442,7 @@ class MainWindow(QMainWindow):
             self.horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
             self.horizontalLayout_8.setSpacing(0)
             self.horizontalLayout_8.setObjectName("horizontalLayout_8")
-            self.sendFile = QtWidgets.QPushButton("Файл", self.frame_4)
+            self.sendFile = QtWidgets.QPushButton("File", self.frame_4)
             sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
             sizePolicy.setHorizontalStretch(0)
             sizePolicy.setVerticalStretch(0)
@@ -484,7 +466,7 @@ class MainWindow(QMainWindow):
                                         "\n"
                                         "")
             self.horizontalLayout_8.addWidget(self.sendFile)
-            self.emo = QtWidgets.QPushButton("Эмо", self.frame_4)
+            self.emo = QtWidgets.QPushButton("Some BTN", self.frame_4)
             sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
             sizePolicy.setHorizontalStretch(0)
             sizePolicy.setVerticalStretch(0)
@@ -578,12 +560,8 @@ class MainWindow(QMainWindow):
         try:
             if self.isMaximized():
                 self.showNormal()
-                # Change Icon
-                # self.ui.menu_btn_3.setIcon(QtGui.QIcon(u":/icons/icons/maximize-2.svg"))
             else:
                 self.showMaximized()
-                # Change Icon
-                # self.ui.menu_btn_3.setIcon(QtGui.QIcon(u":/icons/icons/minimize-2.svg"))
         except Exception as exc:
             print(exc)
 
@@ -641,7 +619,7 @@ class MainWindow(QMainWindow):
         except Exception as exc:
             print('pm_chat_append error:', exc)
 
-    def tabbarclicked(self, tab_index):
+    def tabbar_clicked(self, tab_index):
         try:
             companion = self.ui.tabWidget.widget(tab_index).objectName()
             self.delete_blink_tread(companion)
@@ -687,7 +665,6 @@ class MainWindow(QMainWindow):
         self.ui.sendButton.setDisabled(False)
         self.ui.listWidget.setDisabled(False)
         self.ui.tabWidget.setDisabled(False)
-
         self.thread_receive = Receive(self.client)
         self.thread_receive.start()
         self.thread_receive.threadSignal_all.connect(self.all_chat_append)
@@ -716,7 +693,7 @@ class MainWindow(QMainWindow):
                         self.msg_sender(privatemsg)
                     textbox.setPlainText(None)
                 else:
-                    QMessageBox.critical(self, 'Уведомление', 'Количество введённых символов не должно превышать 1000')
+                    QMessageBox.critical(self, 'Notification', 'The number of characters must be less than 1000')
         except Exception as exc:
             print(exc)
 
@@ -728,7 +705,7 @@ class MainWindow(QMainWindow):
 
     def send_file(self):
         try:
-            res = QFileDialog.getOpenFileName(directory=DESKTOP, caption='Выберите файл для отправки')
+            res = QFileDialog.getOpenFileName(directory=DESKTOP, caption='Choose File...')
             if res[0]:
 
                 companion = self.ui.tabWidget.currentWidget().objectName()
@@ -746,7 +723,7 @@ class MainWindow(QMainWindow):
                 barname = f'bar{companion}'
                 globals()[barname] = QtWidgets.QProgressBar(self.barui.barframe)
                 globals()[barname].setObjectName(f'bar{companion}')
-                globals()[barname].setFormat('Выгрузка...%p%')
+                globals()[barname].setFormat('Sending...%p%')
                 globals()[barname].setAlignment(Qt.AlignHCenter)
                 self.barui.barlayout.insertWidget(0, globals()[barname])
                 self.ui.tabWidget.findChild(QWidget, f'{companion}').layout().addWidget(self.barui.barframe)
@@ -761,7 +738,7 @@ class MainWindow(QMainWindow):
 
     def progressbar(self, filename, companion):
         try:
-            self.append_browser(companion, f'Отправлен файл: {os.path.basename(filename)}')
+            self.append_browser(companion, f'File sent: {os.path.basename(filename)}')
             self.ui.tabWidget.findChild(QWidget, f'barframe{companion}').deleteLater()
             self.ui.tabWidget.findChild(QWidget, f'sendFile{companion}').setDisabled(False)
         except Exception as exc:
@@ -782,9 +759,7 @@ class MainWindow(QMainWindow):
         self.client.close()
         self.ui.plaintab.setDisabled(True)
         self.ui.sendButton.setDisabled(True)
-        # self.discon_btn.setDisabled(True)
         self.ui.listWidget.setDisabled(True)
-        # self.connect_btn.setDisabled(False)
 
     def user_list_online(self, msg):
         try:
@@ -795,15 +770,13 @@ class MainWindow(QMainWindow):
             for user in msg:
                 item = self.ui.listWidget.findItems(user, QtCore.Qt.MatchExactly | QtCore.Qt.MatchRecursive)[0]
                 item.setForeground(0, QtGui.QBrush((QColor('color: rgb(44, 22, 35)'))))
-                # для вкладок
+                # for tabs
                 tabname = self.ui.tabWidget.findChild(QWidget, user)
                 for index in range(1, self.ui.tabWidget.count()):
                     if self.ui.tabWidget.widget(index).objectName() in self.online_usrs:
                         self.ui.tabWidget.setTabIcon(index, QtGui.QIcon('green.svg'))
                     else:
                         self.ui.tabWidget.setTabIcon(index, QtGui.QIcon('grey.svg'))
-
-
         except Exception as exc:
             print('user_list_add error:', exc)
 

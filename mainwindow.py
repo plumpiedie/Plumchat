@@ -451,19 +451,19 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.push_btn_menu.setText(_translate("MainWindow", "Меню"))
-        self.label.setText(_translate("MainWindow", "Заголовок окна"))
+        self.push_btn_menu.setText(_translate("MainWindow", "Menu"))
+        self.label.setText(_translate("MainWindow", "Window Header"))
         self.pushButton_4.setText(_translate("MainWindow", "_"))
-        self.pushButton_3.setText(_translate("MainWindow", "П"))
+        self.pushButton_3.setText(_translate("MainWindow", "O"))
         self.pushButton_2.setText(_translate("MainWindow", "X"))
-        self.menu_btn_1.setText(_translate("MainWindow", "Чат"))
-        self.menu_btn_3.setText(_translate("MainWindow", "Настройки"))
-        self.menu_btn_2.setText(_translate("MainWindow", "Выход"))
-        self.sendFiletab.setText(_translate("MainWindow", "Файл"))
-        self.emo.setText(_translate("MainWindow", "Эмо"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Главный чат"))
-        self.sendButton.setText(_translate("MainWindow", "Отправить"))
-        self.exit_btn.setText(_translate("MainWindow", "Выход"))
+        self.menu_btn_1.setText(_translate("MainWindow", "Chat"))
+        self.menu_btn_3.setText(_translate("MainWindow", "Some BTN"))
+        self.menu_btn_2.setText(_translate("MainWindow", "Exit"))
+        self.sendFiletab.setText(_translate("MainWindow", "File"))
+        self.emo.setText(_translate("MainWindow", "Some BTN"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Main Chat"))
+        self.sendButton.setText(_translate("MainWindow", "Send"))
+        self.exit_btn.setText(_translate("MainWindow", "Exit"))
 
 
 
@@ -486,10 +486,6 @@ class MyBar(object):
         self.barlayout.setContentsMargins(0, 0, 0, 0)
         self.barlayout.setSpacing(0)
         self.barlayout.setObjectName("horizontalLayout_9")
-        # self.globals()[comp] = comp
-        # (self.globals()[comp]) = QtWidgets.QProgressBar(self.barframe)
-        # (self.globals()[comp]).setObjectName("progressBar")
-        # self.barlayout.addWidget(self.globals()[comp])
         self.cancelbtn = QtWidgets.QPushButton(self.barframe)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
@@ -521,4 +517,4 @@ class MyBar(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.cancelbtn.setText(_translate("Form", "Отмена"))
+        self.cancelbtn.setText(_translate("Form", "Cancel"))
