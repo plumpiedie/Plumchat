@@ -12,6 +12,7 @@ import pickle
 
 
 from mainwindow import *
+
 import getpass
 
 
@@ -22,7 +23,7 @@ if not os.path.exists(USERFILES):
     os.mkdir(USERFILES)
 
 IP_ADDRESS = '192.168.77.30'
-PORT = 5005
+PORT = 50005
 window_obj = []
 file_senders = {}
 file_receivers = {}
